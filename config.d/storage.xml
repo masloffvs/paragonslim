@@ -2,10 +2,10 @@
     <storage_configuration>
         <disks>
             <default>
-                <path>/var/lib/clickhouse/disks/default/</path>
+                <path>/mnt/default/</path>
             </default>
             <disk2>
-                <path>/var/lib/clickhouse/disks/disk2/</path>
+                <path>/mnt/disk2/</path>
             </disk2>
         </disks>
         <policies>
