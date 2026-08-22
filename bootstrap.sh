@@ -28,6 +28,10 @@ if [ -d "/mnt" ]; then
             name=$(basename "$dir")
             # Skip system directories like config.d
             if [ "$name" != "config.d" ] && [ "$name" != "volumes.toml" ]; then
+                if [ "$name" = "default" ]; then
+                    echo "Error: Cannot name a disk 'default'"
+                    exit 1
+                fi
                 echo "$name = \"$dir\"" >> /mnt/volumes.toml
             fi
         fi

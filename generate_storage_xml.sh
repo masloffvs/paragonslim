@@ -12,18 +12,18 @@ if not os.path.exists(VOLUMES_TOML):
     default_xml = """<yandex>
     <storage_configuration>
         <disks>
-            <default>
+            <default_disk>
                 <path>/var/lib/clickhouse/</path>
-            </default>
+            </default_disk>
         </disks>
         <policies>
-            <default>
+            <default_policy>
                 <volumes>
                     <main>
-                        <disk>default</disk>
+                        <disk>default_disk</disk>
                     </main>
                 </volumes>
-            </default>
+            </default_policy>
         </policies>
     </storage_configuration>
 </yandex>"""
@@ -68,12 +68,12 @@ xml_lines = [
     "        <disks>"
 ]
 
-# Add standard default disk only if no custom disks named 'default'
-if 'default' not in disks:
+# Add standard default disk only if no custom disks named 'default_disk'
+if 'default_disk' not in disks:
     xml_lines.extend([
-        "            <default>",
+        "            <default_disk>",
         "                <path>/var/lib/clickhouse/</path>",
-        "            </default>"
+        "            </default_disk>"
     ])
 
 for disk_name, disk_path in disks.items():
@@ -99,8 +99,8 @@ if disks:
         xml_lines.append(f"                        <disk>{disk_name}</disk>")
     
     # Add default disk if not already in custom disks
-    if 'default' not in disks:
-        xml_lines.append("                        <disk>default</disk>")
+    if 'default_disk' not in disks:
+        xml_lines.append("                        <disk>default_disk</disk>")
     
     xml_lines.extend([
         "                    </main>",
@@ -109,13 +109,13 @@ if disks:
     ])
 else:
     xml_lines.extend([
-        "            <default>",
+        "            <default_policy>",
         "                <volumes>",
         "                    <main>",
-        "                        <disk>default</disk>",
+        "                        <disk>default_disk</disk>",
         "                    </main>",
         "                </volumes>",
-        "            </default>"
+        "            </default_policy>"
     ])
 
 xml_lines.extend([
