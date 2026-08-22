@@ -35,3 +35,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # TanStack
 .tanstack/
+
+# Local configuration and data
+.junie/
+servers.toml
+volumes.toml
+test_data.csv
+large_test_data.csv
