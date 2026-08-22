@@ -1,0 +1,22 @@
+<yandex>
+    <storage_configuration>
+        <disks>
+            <default>
+                <path>/var/lib/clickhouse/disks/default/</path>
+            </default>
+            <disk2>
+                <path>/var/lib/clickhouse/disks/disk2/</path>
+            </disk2>
+        </disks>
+        <policies>
+            <jbod_policy>
+                <volumes>
+                    <main>
+                        <disk>default</disk>
+                        <disk>disk2</disk>
+                    </main>
+                </volumes>
+            </jbod_policy>
+        </policies>
+    </storage_configuration>
+</yandex>

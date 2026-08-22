@@ -1,0 +1,9 @@
+{
+  "plugins": ["eslint-plugin-spelling", "no-comment"],
+  "rules": {
+    "capitalized-comments": "off",
+    "multiline-comment-style": ["error", "bare-block"],
+    "no-warning-comments": "error",
+    "no-comment/no-comment": "error"
+  }
+}

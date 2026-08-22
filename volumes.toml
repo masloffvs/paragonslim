@@ -1,0 +1,3 @@
+[disks]
+default = "/var/lib/clickhouse/disks/default/"
+disk2 = "/var/lib/clickhouse/disks/disk2/"

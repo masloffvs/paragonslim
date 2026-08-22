@@ -1,0 +1,45 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: chuser
+      CLICKHOUSE_PASSWORD: chsupersecret
+      CLICKHOUSE_DB: default
+    ports:
+      - "48123:8123" # HTTP-интерфейс (нетривиальный порт)
+      - "49440:9000" # Native TCP-протокол (нетривиальный порт)
+
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  clickhouse2:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse2
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: chuser
+      CLICKHOUSE_PASSWORD: chsupersecret
+      CLICKHOUSE_DB: default
+    ports:
+      - "48124:8123" # HTTP-интерфейс (нетривиальный порт)
+      - "49441:9000" # Native TCP-протокол (нетривиальный порт)
+
+    volumes:
+      - clickhouse_data2:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  clickhouse_data:
+  clickhouse_data2:
+  clickhouse_logs:
