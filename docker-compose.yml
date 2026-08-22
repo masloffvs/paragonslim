@@ -13,8 +13,6 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-      clickhouse2:
-        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -45,20 +43,3 @@ services:
       timeout: 5s
       retries: 5
 
-  clickhouse2:
-    image: clickhouse/clickhouse-server:latest
-    container_name: clickhouse2
-    environment:
-      CLICKHOUSE_DB: default
-      CLICKHOUSE_LOG_LEVEL: error
-    ports:
-      - "48124:8123"
-      - "49441:9000"
-    volumes:
-      - ./mnt:/mnt
-      - ./config.d:/etc/clickhouse-server/config.d:ro
-    healthcheck:
-      test: ["CMD", "wget", "-q", "localhost:8123"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
