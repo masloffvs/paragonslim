@@ -28,9 +28,12 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
+    env_file: .env
     environment:
       CLICKHOUSE_DB: default
       CLICKHOUSE_LOG_LEVEL: error
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     ports:
       - "48123:8123"
       - "49440:9000"

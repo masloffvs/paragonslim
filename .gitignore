@@ -43,3 +43,4 @@ volumes.toml
 test_data.csv
 large_test_data.csv
 public/bundle.js
+.env
