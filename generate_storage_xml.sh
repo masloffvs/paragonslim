@@ -2,8 +2,8 @@
 import os
 import sys
 
-VOLUMES_TOML = "/mnt/volumes.toml"
-STORAGE_XML = "/mnt/config.d/storage.xml"
+VOLUMES_TOML = "/app/volumes.toml"
+STORAGE_XML = "/app/config.d/storage.xml"
 
 print(f"GenerateStorage: Checking for volumes.toml at {VOLUMES_TOML}")
 

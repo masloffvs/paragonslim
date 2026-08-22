@@ -4,6 +4,7 @@ services:
     container_name: bootstrap
     volumes:
       - ./mnt:/mnt
+      - .:/app
       - ./bootstrap.sh:/bootstrap.sh:ro
       - ./generate_storage_xml.sh:/bootstrap/generate_storage_xml.sh:ro
     command: ["/bin/sh", "/bootstrap.sh"]
@@ -51,7 +52,7 @@ services:
       - "49440:9000"
     volumes:
       - ./mnt:/mnt
-      - ./mnt/config.d:/etc/clickhouse-server/config.d:ro
+      - ./config.d:/etc/clickhouse-server/config.d:ro
       - ./clickhouse_logs:/var/log/clickhouse-server
     depends_on:
       bootstrap:

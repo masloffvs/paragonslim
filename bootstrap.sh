@@ -22,7 +22,7 @@ fi
 
 # Generate volumes.toml and storage.xml
 if [ -d "/mnt" ]; then
-    echo "[disks]" > /mnt/volumes.toml
+    echo "[disks]" > /app/volumes.toml
     for dir in /mnt/*/; do
         if [ -d "$dir" ]; then
             name=$(basename "$dir")
@@ -32,19 +32,19 @@ if [ -d "/mnt" ]; then
                     echo "Error: Cannot name a disk 'default'"
                     exit 1
                 fi
-                echo "$name = \"$dir\"" >> /mnt/volumes.toml
+                echo "$name = \"$dir\"" >> /app/volumes.toml
             fi
         fi
     done
     echo "Bootstrap: Generated volumes.toml"
-    cat /mnt/volumes.toml
+    cat /app/volumes.toml
     
     # Generate storage.xml using Python script
     if [ -f "/bootstrap/generate_storage_xml.sh" ]; then
         # Run the generator with modified paths
         python3 /bootstrap/generate_storage_xml.sh
         echo "Bootstrap: Generated storage.xml"
-        cat /mnt/config.d/storage.xml
+        cat /app/config.d/storage.xml
     fi
 fi
 
