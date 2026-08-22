@@ -16,10 +16,12 @@ else
     # Generate secure random credentials
     CLICKHOUSE_USER="admin_$(openssl rand -hex 8)"
     CLICKHOUSE_PASSWORD="$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)"
+    GENERATED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
     
     cat > "$ENV_FILE" <<EOF
 CLICKHOUSE_USER=$CLICKHOUSE_USER
 CLICKHOUSE_PASSWORD=$CLICKHOUSE_PASSWORD
+GENERATED_AT=$GENERATED_AT
 EOF
     
     echo "✓ Generated secure credentials:"
