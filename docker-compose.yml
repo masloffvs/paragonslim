@@ -1,45 +1,28 @@
 services:
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: clickhouse
-    restart: unless-stopped
-    environment:
-      CLICKHOUSE_USER: chuser
-      CLICKHOUSE_PASSWORD: chsupersecret
-      CLICKHOUSE_DB: default
+  app:
+    build: .
+    container_name: app
     ports:
-      - "48123:8123" # HTTP-интерфейс (нетривиальный порт)
-      - "49440:9000" # Native TCP-протокол (нетривиальный порт)
-
+      - "3000"
     volumes:
-      - clickhouse_data:/var/lib/clickhouse
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-  clickhouse2:
-    image: clickhouse/clickhouse-server:latest
-    container_name: clickhouse2
-    restart: unless-stopped
+      - .:/app
+      - /app/node_modules
+      - ./mnt:/mnt
     environment:
-      CLICKHOUSE_USER: chuser
-      CLICKHOUSE_PASSWORD: chsupersecret
-      CLICKHOUSE_DB: default
+      - HYPERVISOR=docker
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      clickhouse2:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
     ports:
-      - "48124:8123" # HTTP-интерфейс (нетривиальный порт)
-      - "49441:9000" # Native TCP-протокол (нетривиальный порт)
-
+      - "25236:25236"
     volumes:
-      - clickhouse_data2:/var/lib/clickhouse
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
 
-volumes:
-  clickhouse_data:
-  clickhouse_data2:
-  clickhouse_logs:

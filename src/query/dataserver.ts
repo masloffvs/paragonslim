@@ -30,7 +30,7 @@ export class MemoryLimitExceededError extends Error {
 
 const DEFAULT_BATCH_SIZE = 5000;
 const DEFAULT_MEMORY_LIMIT = 1000;
-const BATCH_RAM_ALLOCATE = 2 * 1024 * 1024 * 1024; // 2GB in bytes
+const BATCH_RAM_ALLOCATE = 2 * 1024 * 1024 * 1024;
 
 function generateShardKey(primaryKeyValue: any, uniqKeyValues?: Record<string, any>): string {
   const values = [primaryKeyValue];
@@ -69,7 +69,7 @@ function generateUUID(): string {
 export class DataServer {
   private destinationFn: ((row: any) => void) | null = null;
   private batchDestinationFn: ((rows: any[]) => void | Promise<void>) | null = null;
-  private batchDestinationSize: number = 10000; // Сбалансированный размер для destinationBatch
+  private batchDestinationSize: number = 10000;
   private previewLimit: number | null = null;
   private confirmationFn: (() => Promise<boolean>) | null = null;
   private batchSizeValue: number = DEFAULT_BATCH_SIZE;
@@ -84,7 +84,7 @@ export class DataServer {
       dataset: string;
       loadBalancer?: (dataset: string, row: any, nodes: string[]) => string | Promise<string>;
       uniqKeys?: string[];
-      primaryKey?: string[]; // Опционально, если не указан - берется из схемы датасета
+      primaryKey?: string[];
     },
   ) {
     if (!Array.isArray(rows) || rows.length === 0) {
@@ -120,10 +120,8 @@ export class DataServer {
       $logger.debug(`DataServer.write: using cached schema for dataset '${datasetName}'`);
     }
 
-    // Определяем primary key для дедупликации и ID генерации
     let primaryKey = options.primaryKey;
     
-    // Если primaryKey не передан явно, пробуем получить из схемы датасета в контексте
     if (!primaryKey) {
       const datasetSchema = this.initContext.datasetSchemas.get(datasetName);
       if (datasetSchema?.primaryKey) {
@@ -132,15 +130,12 @@ export class DataServer {
       }
     }
     
-    // Если все еще нет primaryKey, используем первый ключ из схемы
     if (!primaryKey) {
       primaryKey = schema.keys.slice(0, 1);
       $logger.debug(`DataServer.write: using fallback primaryKey from schema: ${primaryKey.join(', ')}`);
     }
 
     for (const row of rows) {
-      // Всегда перезаписываем ID, если есть primaryKey в схеме
-      // Это нужно, так как данные могут содержать старые числовые ID из источника
       const pkValue = row[primaryKey[0]];
       const uniqKeyValues: Record<string, any> = {};
       
@@ -179,7 +174,6 @@ export class DataServer {
     const nodeBatches = new Map<string, any[]>();
 
     for (const row of rows) {
-      // Формируем значения для primary key для балансировки
       const pkValues: any[] = [];
       
       for (const key of primaryKey) {
@@ -243,8 +237,6 @@ export class DataServer {
       throw new Error(`Client for node ${targetNode} not found`);
     }
 
-    // ID уже установлен в write методе, вставляем как есть
-    // ReplacingMergeTree сам разберется с дедупликацией по primary key
 
     $logger.debug(`DataServer.processBatch: inserting ${nodeRows.length} rows into dataset '${datasetName}' on ClickHouse node '${targetNode}'`);
     try {
@@ -352,8 +344,7 @@ export class DataServer {
     let rawBatch: any[] = [];
     let emitted = 0;
     
-    // Используем сбалансированный размер для пайплайна, учитывая ограничения ClickHouse
-    const pipelineBatchSize = 10000; // Оптимальный размер для баланса производительности и max_query_size
+    const pipelineBatchSize = 10000;
 
     const flushBatch = async (): Promise<any[]> => {
       if (rawBatch.length === 0) return [];
