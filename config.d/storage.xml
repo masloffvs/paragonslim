@@ -2,21 +2,17 @@
     <storage_configuration>
         <disks>
             <default>
-                <path>/mnt/default/</path>
+                <path>/var/lib/clickhouse/</path>
             </default>
-            <disk2>
-                <path>/mnt/disk2/</path>
-            </disk2>
         </disks>
         <policies>
-            <jbod_policy>
+            <default>
                 <volumes>
                     <main>
                         <disk>default</disk>
-                        <disk>disk2</disk>
                     </main>
                 </volumes>
-            </jbod_policy>
+            </default>
         </policies>
     </storage_configuration>
 </yandex>

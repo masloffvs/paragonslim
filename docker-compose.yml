@@ -1,10 +1,11 @@
 services:
   bootstrap:
-    image: alpine:latest
+    image: debian:stable-slim
     container_name: bootstrap
     volumes:
       - ./mnt:/mnt
       - ./bootstrap.sh:/bootstrap.sh:ro
+      - ./generate_storage_xml.sh:/bootstrap/generate_storage_xml.sh:ro
     command: ["/bin/sh", "/bootstrap.sh"]
     depends_on: []
 
@@ -42,7 +43,7 @@ services:
     env_file: .env
     environment:
       CLICKHOUSE_DB: default
-      CLICKHOUSE_LOG_LEVEL: error
+      CLICKHOUSE_LOG_LEVEL: trace
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
     ports:
@@ -50,7 +51,8 @@ services:
       - "49440:9000"
     volumes:
       - ./mnt:/mnt
-      - ./config.d:/etc/clickhouse-server/config.d:ro
+      - ./mnt/config.d:/etc/clickhouse-server/config.d:ro
+      - ./clickhouse_logs:/var/log/clickhouse-server
     depends_on:
       bootstrap:
         condition: service_completed_successfully

@@ -45,3 +45,4 @@ large_test_data.csv
 public/bundle.js
 .env
 mnt/
+clickhouse_logs/
