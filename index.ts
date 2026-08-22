@@ -23,6 +23,7 @@ import { exit } from "process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+console.log("DEBUG: process.argv:", process.argv);
 const cli = initializeCli();
 
 const port = cli.getOptionValue<number>("port");

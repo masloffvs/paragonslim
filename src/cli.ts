@@ -37,7 +37,14 @@ export class Cli {
       .option("-e, --entrypoint <string>", "Dataset entrypoint name")
       .option("--forceRecreateTable", "Drop table before import and recreate it");
 
-    this.program.parse();
+    try {
+      this.program.parse(process.argv);
+      this.logger.debug(`Parsed options: ${JSON.stringify(this.program.opts())}`);
+      console.log("DEBUG: Parsed options:", this.program.opts());
+    } catch (e) {
+      console.error("DEBUG: Parse error:", e);
+      throw e;
+    }
   }
 
   private valueToTyped<T>(value: string | undefined | any): T | undefined {

@@ -1,18 +1,22 @@
 <yandex>
     <storage_configuration>
         <disks>
-            <default_disk>
-                <path>/var/lib/clickhouse/</path>
-            </default_disk>
+            <disk998>
+                <path>/mnt/disk998/</path>
+            </disk998>
+            <disk999>
+                <path>/mnt/disk999/</path>
+            </disk999>
         </disks>
         <policies>
-            <default_policy>
+            <jbod_policy>
                 <volumes>
                     <main>
-                        <disk>default_disk</disk>
+                        <disk>disk998</disk>
+                        <disk>disk999</disk>
                     </main>
                 </volumes>
-            </default_policy>
+            </jbod_policy>
         </policies>
     </storage_configuration>
 </yandex>

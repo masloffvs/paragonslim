@@ -17,7 +17,6 @@ services:
       - "3000"
     volumes:
       - .:/app
-      - /app/node_modules
       - ./mnt:/mnt
     environment:
       - HYPERVISOR=docker

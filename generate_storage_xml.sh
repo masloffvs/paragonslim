@@ -86,7 +86,7 @@ if disks:
         xml_lines.append(f"                        <disk>{disk_name}</disk>")
     
     # Always add global default disk
-    xml_lines.append("                        <disk>default</disk>")
+    # xml_lines.append("                        <disk>default</disk>")
     
     xml_lines.extend([
         "                    </main>",

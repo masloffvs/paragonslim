@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 if [ "$HYPERVISOR" = "docker" ] && [ -d "/mnt" ]; then
     echo "[disks]" > /app/volumes.toml
     for dir in /mnt/*/; do
@@ -10,10 +11,5 @@ if [ "$HYPERVISOR" = "docker" ] && [ -d "/mnt" ]; then
     echo "DockerEntrypoint: Generated volumes.toml"
     cat /app/volumes.toml
     
-    # Generate storage.xml from volumes.toml
-    if [ -f "/app/generate_storage_xml.sh" ]; then
-        python3 /app/generate_storage_xml.sh
-        echo "DockerEntrypoint: Generated storage.xml"
-    fi
 fi
 exec "$@"
