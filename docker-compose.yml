@@ -1,4 +1,13 @@
 services:
+  bootstrap:
+    image: alpine:latest
+    container_name: bootstrap
+    volumes:
+      - ./mnt:/mnt
+      - ./bootstrap.sh:/bootstrap.sh:ro
+    command: ["/bin/sh", "/bootstrap.sh"]
+    depends_on: []
+
   app:
     build: .
     container_name: app
@@ -11,6 +20,8 @@ services:
     environment:
       - HYPERVISOR=docker
     depends_on:
+      bootstrap:
+        condition: service_completed_successfully
       clickhouse:
         condition: service_healthy
 
@@ -40,6 +51,9 @@ services:
     volumes:
       - ./mnt:/mnt
       - ./config.d:/etc/clickhouse-server/config.d:ro
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-q", "localhost:8123"]
       interval: 5s
