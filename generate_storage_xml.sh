@@ -11,16 +11,11 @@ if not os.path.exists(VOLUMES_TOML):
     print("GenerateStorage: volumes.toml not found, using default configuration")
     default_xml = """<yandex>
     <storage_configuration>
-        <disks>
-            <default_disk>
-                <path>/var/lib/clickhouse/</path>
-            </default_disk>
-        </disks>
         <policies>
             <default_policy>
                 <volumes>
                     <main>
-                        <disk>default_disk</disk>
+                        <disk>default</disk>
                     </main>
                 </volumes>
             </default_policy>
@@ -68,14 +63,6 @@ xml_lines = [
     "        <disks>"
 ]
 
-# Add standard default disk only if no custom disks named 'default_disk'
-if 'default_disk' not in disks:
-    xml_lines.extend([
-        "            <default_disk>",
-        "                <path>/var/lib/clickhouse/</path>",
-        "            </default_disk>"
-    ])
-
 for disk_name, disk_path in disks.items():
     print(f"GenerateStorage: Adding disk {disk_name} = {disk_path}")
     xml_lines.extend([
@@ -98,9 +85,8 @@ if disks:
     for disk_name in disks.keys():
         xml_lines.append(f"                        <disk>{disk_name}</disk>")
     
-    # Add default disk if not already in custom disks
-    if 'default_disk' not in disks:
-        xml_lines.append("                        <disk>default_disk</disk>")
+    # Always add global default disk
+    xml_lines.append("                        <disk>default</disk>")
     
     xml_lines.extend([
         "                    </main>",
@@ -112,7 +98,7 @@ else:
         "            <default_policy>",
         "                <volumes>",
         "                    <main>",
-        "                        <disk>default_disk</disk>",
+        "                        <disk>default</disk>",
         "                    </main>",
         "                </volumes>",
         "            </default_policy>"
