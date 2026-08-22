@@ -1,6 +1,6 @@
 services:
   bootstrap:
-    image: debian:stable-slim
+    image: python:3-slim
     container_name: bootstrap
     volumes:
       - ./mnt:/mnt
