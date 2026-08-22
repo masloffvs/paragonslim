@@ -26,7 +26,10 @@ if [ -d "/mnt" ]; then
     for dir in /mnt/*/; do
         if [ -d "$dir" ]; then
             name=$(basename "$dir")
-            echo "$name = \"$dir\"" >> /mnt/volumes.toml
+            # Skip system directories like config.d
+            if [ "$name" != "config.d" ] && [ "$name" != "volumes.toml" ]; then
+                echo "$name = \"$dir\"" >> /mnt/volumes.toml
+            fi
         fi
     done
     echo "Bootstrap: Generated volumes.toml"

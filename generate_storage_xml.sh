@@ -65,11 +65,16 @@ print(f"GenerateStorage: Parsed disks: {disks}")
 xml_lines = [
     "<yandex>",
     "    <storage_configuration>",
-    "        <disks>",
-    "            <default>",
-    "                <path>/var/lib/clickhouse/</path>",
-    "            </default>"
+    "        <disks>"
 ]
+
+# Add standard default disk only if no custom disks named 'default'
+if 'default' not in disks:
+    xml_lines.extend([
+        "            <default>",
+        "                <path>/var/lib/clickhouse/</path>",
+        "            </default>"
+    ])
 
 for disk_name, disk_path in disks.items():
     print(f"GenerateStorage: Adding disk {disk_name} = {disk_path}")
@@ -86,12 +91,16 @@ if disks:
     xml_lines.extend([
         "            <jbod_policy>",
         "                <volumes>",
-        "                    <main>",
-        "                        <disk>default</disk>"
+        "                    <main>"
     ])
     
+    # Add custom disks to policy
     for disk_name in disks.keys():
         xml_lines.append(f"                        <disk>{disk_name}</disk>")
+    
+    # Add default disk if not already in custom disks
+    if 'default' not in disks:
+        xml_lines.append("                        <disk>default</disk>")
     
     xml_lines.extend([
         "                    </main>",
