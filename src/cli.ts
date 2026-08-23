@@ -18,16 +18,7 @@ export class Cli {
       .name("Paragon Mini")
       .description("CLI tool for Paragon Mini")
       .version("0.0.1")
-      .option(
-        "-s, --serversConfig <path>",
-        "Path to the servers config file",
-        "./servers.toml",
-      )
-      .option(
-        "--volumesConfig <path>",
-        "Path to the volumes config file",
-        "./volumes.toml",
-      )
+     
       .option("-p, --port <number>", "Port to run the server on", "3011")
       .option("-h, --host <string>", "Host to run the server on", "localhost");
 

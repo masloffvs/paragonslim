@@ -1,13 +1,14 @@
 import { readdir } from "fs/promises";
-import { join } from "path";
+import { join, extname, basename } from "path";
 import { injectable } from "tsyringe";
 import { Dataset } from "./dataset";
 import { Logger } from "../pino";
 
 @injectable()
 export class Datasets {
-  private datasetFileExt = ['.js', '.ts']
+  private datasetFileExt = new Set([".js", ".ts"]);
   private datasets: Map<string, Dataset> = new Map();
+
   constructor(private logger: Logger) {}
 
   register(name: string, dataset: Dataset): void {
@@ -30,26 +31,36 @@ export class Datasets {
   async loadFromDirectory(datasetsPath: string): Promise<void> {
     try {
       const files = await readdir(datasetsPath);
-      
-      for (const file of files) {
-        if (this.datasetFileExt.some(ext => file.endsWith(ext))) {
-          const filePath = join(datasetsPath, file);
-          try {
-            const module = await import(filePath);
-            const dataset = module.default;
-            
-            if (dataset instanceof Dataset) {
-              this.register(dataset.define?.name || file.replace(new RegExp(`\\.(${this.datasetFileExt.join('|')})$`), ''), dataset);
-            } else {
-              this.logger.warn(`File ${file} does not export a Dataset instance`);
-            }
-          } catch (error) {
-            this.logger.error(`Failed to load dataset from ${file}: ${error}`);
-          }
-        }
-      }
+      await Promise.all(
+        files.map((file) => this.loadDatasetFile(datasetsPath, file)),
+      );
     } catch (error) {
       this.logger.error(`Failed to read datasets directory: ${error}`);
+    }
+  }
+
+  private async loadDatasetFile(
+    datasetsPath: string,
+    file: string,
+  ): Promise<void> {
+    const ext = extname(file);
+    if (!this.datasetFileExt.has(ext)) return;
+
+    const filePath = join(datasetsPath, file);
+
+    try {
+      const module = await import(filePath);
+      const dataset = module.default;
+
+      if (!(dataset instanceof Dataset)) {
+        this.logger.warn(`File ${file} does not export a Dataset instance`);
+        return;
+      }
+
+      const datasetName = dataset.define?.name || basename(file, ext);
+      this.register(datasetName, dataset);
+    } catch (error) {
+      this.logger.error(`Failed to load dataset from ${file}: ${error}`);
     }
   }
 }

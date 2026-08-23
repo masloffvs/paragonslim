@@ -1,26 +1,26 @@
 import { normalizePhone as normalizePhoneUtil } from "../../servers/types/phone";
 import { EmailType } from "../../servers/types/emailType";
 
-type Normalizer = (value: any) => any;
+type Normalizer = (value: unknown) => unknown;
 
 const normalizers: Record<string, Normalizer> = {
-    phone: (value: any): string => {
+    phone: (value: unknown): unknown => {
         if (typeof value !== 'string') return value;
         return normalizePhoneUtil(value);
     },
     
-    email: (value: any): string => {
+    email: (value: unknown): unknown => {
         if (typeof value !== 'string') return value;
         return EmailType.normalize(value);
     },
     
-    name: (value: any): string => {
+    name: (value: unknown): unknown => {
         if (typeof value !== 'string') return value;
         return value.trim().replace(/\s+/g, ' ');
     }
 };
 
-export function normalizeValue(key: string, value: any): any {
+export function normalizeValue(key: string, value: unknown): unknown {
     if (value === null || value === undefined) {
         return value;
     }

@@ -1,0 +1,11 @@
+<clickhouse>
+    <logger>
+        <level>trace</level>
+        <console>1</console>
+        <log remove="1"/>
+        <errorlog remove="1"/>
+    </logger>
+    <http_port>8123</http_port>
+    <tcp_port>9000</tcp_port>
+    <listen_host>0.0.0.0</listen_host>
+</clickhouse>

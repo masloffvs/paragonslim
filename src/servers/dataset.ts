@@ -1,5 +1,6 @@
 
 import $logger from "../pino";
+import { assertNotNil, assertStringEqual } from "../query/utils/assert";
 import { collapseKey, getDefaultFieldMapping } from "../query/utils/keyUtils";
 
 function checkVersion(version: string): void {
@@ -24,6 +25,49 @@ export class Dataset {
     checkVersion(define.version);
     this.define = define;
     $logger.debug(`Creating dataset ${define.name} version ${define.version}`);
+  }
+  
+  get tableName(): string {
+    return `${this.define.name}_${this.define.version}`;
+  }
+
+  get fullTableName(): string {
+    return `default.${this.tableName}`;
+  }
+  
+  get primaryKey(): string | string[] {
+    return this.define.primaryKey || [];
+  }
+
+  get keys(): string[] {
+    return Object.keys(this.define.row || {});
+  }
+
+  isArrayHasKeysDeep<T>(array: Array<T>): boolean {
+    return array.some((item) => {
+      if (Array.isArray(item)) {
+        return this.isArrayHasKeysDeep(item);
+      }
+      return Object.keys(item as object).length > 0;
+    });
+  }
+
+  peekOnlyDatasetKeysInObjArray<T>(array: Array<T>): Array<T> {
+    const keys = this.keys;
+    return array.flatMap((item) => {
+      if (typeof item !== 'object' || item === null) {
+        return null;
+      }
+   
+      const obj = item as object;
+      const filteredObj: any = {};
+      for (const key of keys) {
+        if (key in obj) {
+          filteredObj[key] = obj[key];
+        }
+      }
+      return filteredObj;
+    }).filter((item) => item !== null) as Array<T>;
   }
 }
 
@@ -70,7 +114,7 @@ type TableEngine = MergeTreeEngine | LogEngine | SpecialEngine;
 
 interface ClickHouseConfig {
   database?: string;
-  engine?: TableEngine;
+  engine?: TableEngine | { name: TableEngine; version: string };
   orderBy?: string[];
   partitionBy?: string;
   primaryKey?: string[];
@@ -82,7 +126,7 @@ interface DefineDataset {
   name: string;
   version: string;
   primaryKey?: string | string[];
-  row?: Record<string, RowValue>;
+  row?: Record<string, RowValue | false>;
   clickhouse?: ClickHouseConfig;
 }
 
@@ -106,6 +150,8 @@ export function defineDataset(define: DefineDataset) {
   const collapsedKeys = new Map<string, string>();
   const autoAddedKeys = new Set<string>();
 
+  assertStringEqual(define.clickhouse?.database || "default", "default", "Dataset database must be 'default'");
+
   const primaryKeys = define.primaryKey
     ? Array.isArray(define.primaryKey)
       ? define.primaryKey
@@ -114,15 +160,6 @@ export function defineDataset(define: DefineDataset) {
 
   if (!define.row) {
     define.row = {};
-  }
-  if (!define.row.id) {
-    // Если есть primaryKey в clickhouse настройках, используем String для shard key
-    const hasPrimaryKey = define.clickhouse?.primaryKey && define.clickhouse.primaryKey.length > 0;
-    define.row.id = { 
-      type: hasPrimaryKey ? "String" : "UUID", 
-      nullable: false 
-    };
-    autoAddedKeys.add("id");
   }
 
   for (const pk of primaryKeys) {
@@ -143,6 +180,7 @@ export function defineDataset(define: DefineDataset) {
   }
 
   for (const [key, r] of Object.entries(define.row || {})) {
+    if (r === false) continue;
     if (!r.type) {
       throw new Error(`Row value must have a type`);
     }

@@ -13,7 +13,9 @@ export class ClickHouseSource extends Source {
     }
 
     try {
-      const result = await this.context.ch.query(this.raw + " SETTINGS storage_policy = 'jbod_policy'");
+      const result = await this.context.ch.query(
+        this.raw + " SETTINGS storage_policy = 'hot'",
+      );
       return result as T | null | undefined;
     } catch (error) {
       console.error("ClickHouse query error:", error);

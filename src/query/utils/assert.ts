@@ -33,6 +33,22 @@ export function assertNotNil<T>(value: T, fallback: T): T {
     return isNil(value) ? fallback : value;
 }
 
+export function assertStringEqual(value: string, expected: string, message: string): void {
+    if (value !== expected) {
+        throw new Error(message);
+    }
+}
+
+/**
+ * Asserts that a value is initialized (not null or undefined), throws error if not
+ */
+export function assertInitialized<T>(value: T | undefined, message: string): T {
+    if (isNil(value)) {
+        throw new Error(message);
+    }
+    return value;
+}
+
 /**
  * Checks if a value is a string
  */

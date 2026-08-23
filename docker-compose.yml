@@ -1,28 +1,17 @@
 services:
-  bootstrap:
-    image: python:3-slim
-    container_name: bootstrap
-    volumes:
-      - ./mnt:/mnt
-      - .:/app
-      - ./bootstrap.sh:/bootstrap.sh:ro
-      - ./generate_storage_xml.sh:/bootstrap/generate_storage_xml.sh:ro
-    command: ["/bin/sh", "/bootstrap.sh"]
-    depends_on: []
-
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: app
     ports:
       - "3000"
     volumes:
-      - .:/app
       - ./mnt:/mnt
     environment:
       - HYPERVISOR=docker
+    env_file: .env
     depends_on:
-      bootstrap:
-        condition: service_completed_successfully
       clickhouse:
         condition: service_healthy
 
@@ -36,7 +25,6 @@ services:
     depends_on:
       - app
 
-
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
@@ -46,19 +34,38 @@ services:
       CLICKHOUSE_LOG_LEVEL: trace
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    entrypoint: ["/bin/bash", "-c", "/docker-entrypoint-initdb.d/ch-entrypoint.sh && /entrypoint.sh"]
     ports:
       - "48123:8123"
       - "49440:9000"
     volumes:
       - ./mnt:/mnt
-      - ./config.d:/etc/clickhouse-server/config.d:ro
-      - ./clickhouse_logs:/var/log/clickhouse-server
-    depends_on:
-      bootstrap:
-        condition: service_completed_successfully
+      - ./config.d:/etc/clickhouse-server/config.d.tmp:ro
+      - ./ch-entrypoint.sh:/docker-entrypoint-initdb.d/ch-entrypoint.sh:ro
+      - /mnt/clickhouse_data:/var/lib/clickhouse
+    tmpfs:
+      - /etc/clickhouse-server/config.d:rw
     healthcheck:
       test: ["CMD", "wget", "-q", "localhost:8123"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  clicklens:
+    image: ghcr.io/ntk148v/clicklens:latest
+    ports:
+      - "47123:3000"
+    env_file: .env
+    environment:
+      - CLICKHOUSE_CLUSTERS=[{"id":"primary","label":"Primary","host":"clickhouse","port":8123,"lensUser":"${CLICKLENS_USER}","lensPassword":"${CLICKLENS_PASSWORD}"}]
+      - SESSION_SECRET=${SESSION_TOKEN_32}
+      - NODE_ENV=production
+      - DISABLE_SECURE_COOKIES=true
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+ 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped

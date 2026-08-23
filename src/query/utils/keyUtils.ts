@@ -6,7 +6,7 @@ export const FIELD_MAPPINGS = {
     name: ['name', 'fullName', 'full_name', 'userName', 'user_name', 'username'],
     firstName: ['firstName', 'first_name', 'fname'],
     lastName: ['lastName', 'last_name', 'lname'],
-    id: ['id', 'uuid'],
+    id: ['id', 'uuid', 'userId', 'user_id', 'yauid'],
     age: ['age', 'years', 'yearsOld', 'years_old'],
     address: ['address', 'addr', 'location', 'streetAddress', 'street_address'],
     date: ['date', 'createdAt', 'created_at', 'timestamp', 'time'],

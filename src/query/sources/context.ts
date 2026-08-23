@@ -1,5 +1,4 @@
 import type { Ch } from "../../ch/init";
-import type { VolumesConfig } from "../../servers/config";
 
 export class Context {
     public readonly variables: Map<string, any> = new Map();
@@ -7,7 +6,6 @@ export class Context {
     
     constructor(
         public readonly ch: Ch,
-        public readonly volumesConfig: VolumesConfig
     ) {
         
     }

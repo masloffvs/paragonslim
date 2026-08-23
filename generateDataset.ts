@@ -208,96 +208,73 @@ Available Field Mapping Dictionary (from src/query/utils/keyUtils.ts):
 ${fieldMappingStr}
 \`\`\`
 
-Available Dataset Types & Helpers (from src/servers/types/):
-\`\`\`typescript
-${typesContent}
-\`\`\`
-
-System Source Files Reference (examples of dataset definitions and importers):
+System Source Files Reference (use these as the pattern for dataset definition and importer):
 \`\`\`typescript
 ${systemSourceContent}
 \`\`\`
 
 Generate a TypeScript file that:
-1. Infers the data structure from the sample
-2. Uses the field mapping dictionary to normalize field names to their canonical camelCase form (e.g. use "phone" or "phon" -> "phone" instead of "phoneNumber" or "phone_number", "email" instead of "email_address", etc.)
-3. Uses specialized dataset type methods with .toDatasetType() when available in src/servers/types (e.g., phone: PhoneType.toDatasetType(), email: EmailType.toDatasetType(), age: AgeType.toDatasetType()), importing them appropriately from "../src/servers/types/..."
-4. Falls back to standard RowValueType ("String", "Int64", "Float64", "DateTime", "Boolean", "UUID") for other fields
-5. **CRITICAL / RESERVED**: NEVER use "id" as a row field name in \`row\` (do NOT define \`id: { type: ... }\` in \`row\`), because row name \`"id"\` is reserved and throws a runtime error (\`Row with name 'id' is reserved and cannot be used\`). If the data has an id column, skip it or name it something else (like \`userId\`,\`recordId\`, \`yauid\`, etc.). However, "id" or other fields can be used in \`clickhouse.orderBy\`.
-  6. Sets up ClickHouse configuration using the ClickHouseConfig format. **CRITICAL**: If any column in \`orderBy\` is \`nullable: true\`, add \`settings: { allow_nullable_key: 1 }\` to the \`clickhouse\` config to avoid ClickHouse error \"Sorting key contains nullable columns\".
-  7. **ORDER BY CHOICE**: Prefer a stable, high-cardinality column for \`orderBy\` (e.g. an Int64 id, UUID, or timestamp). Avoid using mutable String columns like phone or email as \`orderBy\`.
-  8. Do NOT use \`uniqKeys\` - ClickHouse does not support \`ALTER TABLE ... ADD CONSTRAINT ... UNIQUE\` reliably, and uniqueness is not required at the storage layer.
-  9. Uses the dataset.defineDataset format
-  10. **IMPORTER FUNCTION**: Generates \`export async function importerFromFile(dataserver: DataServer)\` following the exact pattern from \`datasets/yandexPracticumFinal.ts\`:
-      - Uses \`dataserver.destinationBatch((rows) => { dataserver.write(rows, { dataset: "dataset_name" }); }, batchSize)\` instead of \`destination\` for batched writes (recommended batchSize: 100)
-      - Calls \`await dataserver.preview(3).destinationBatch(...).call([ ... ])\`
-   - Uses \`StreamCSVSource\` with the file path (\`${fileName}\`) and delimiter (e.g. \`"\\t"\` for tab-separated or \`","\` for comma-separated based on sample content).
-   - Uses \`Transformation\` to map raw headers/columns to normalized row fields (handling any trailing carriage returns like \`\\r\` in CSV headers if present).
-   - Uses second stage: \`new Stage(new PassThroughTransformerSource(), new BasicDeenthropyTransformer())\`.
-   - Imports all required modules correctly (\`defineDataset\`, \`DataServer\`, \`PassThroughTransformerSource\`, \`Stage\`, \`StreamCSVSource\`, \`Transformation\`, \`BasicDeenthropyTransformer\`, and type methods).
+1. Infers the data structure from the sample.
+2. Uses the field mapping dictionary to normalize field names to their canonical camelCase form.
+3. Uses specialized dataset type methods (e.g., EmailType.toDatasetType(nullable)).
+4. **CRITICAL**: If the data has an "id" column, define it as { type: "Int64", nullable: false } and use "ReplacingMergeTree" as the engine with id as the version in the clickhouse config.
+5. **IMPORTER FUNCTION**: Generates \`export async function importerFromFile(dataserver: DataServer)\` following the exact pattern from \`datasets/yandexPracticumFinal.ts\`:
+   - Create a \`new $data.stream.csv\` with the file path (\`${fileName}\`) and delimiter.
+   - Use \`stream.redirectToBatch(async it => { ... }, batchSize)\` for batched processing (e.g., 50,000).
+   - Use \`dataserver.write(dataset, it.map(...).filter(...).map(...))\`.
+   - Call \`dataserver.optimize(dataset)\` after the write.
 
 IMPORTANT: Use the exact format specified below.
 
-Return ONLY the TypeScript code without any explanations or markdown formatting. The code should be ready to be saved as a .ts file in the datasets directory.
-
-Format:
+Format Example (MUST follow this):
 \`\`\`typescript
 import { defineDataset } from "../src/servers/dataset";
-import { PhoneType } from "../src/servers/types/phoneType";
 import { EmailType } from "../src/servers/types/emailType";
-import { AgeType } from "../src/servers/types/ageType";
-import { DataServer, PassThroughTransformerSource } from "../src/query/dataserver";
-import { Stage } from "../src/query/stage";
-import { StreamCSVSource } from "../src/query/sources/streamCSV";
-import { Transformation } from "../src/query/transformation";
+import { DataServer } from "../src/query/dataserver";
 import { BasicDeenthropyTransformer } from "../src/query/transformers/basicDeenthropyTransformer";
+import $data from "../src/data";
 
 const dataset = defineDataset({
   name: "dataset_name",
   version: "001",
   row: {
-    fieldName: {
-      type: "String", // or "Int64", "Float64", "DateTime", "Boolean", "UUID"
-      nullable: true
-    },
-    phone: PhoneType.toDatasetType()
+    id: { type: "Int64", nullable: false },
+    email: EmailType.toDatasetType(true),
+    // ... other fields
   },
   clickhouse: {
     database: "default",
-    engine: "MergeTree",
-    orderBy: ["yauid"]
-  }
+    engine: { name: "ReplacingMergeTree", version: "id" },
+    settings: { allow_nullable_key: 1 }
+  },
 });
 
 export default dataset;
 
 export async function importerFromFile(dataserver: DataServer) {
-  await dataserver
-    .preview(3)
-    .destinationBatch((rows) => {
-      dataserver.write(rows, {
-        dataset: "dataset_name",
-      });
-    }, 100)
-    .call([
-      new Stage(
-        new StreamCSVSource(
-          "${fileName}",
-          ",",
-        ),
-        new Transformation((it: any) => {
-          return {
-            // mapped fields
-          };
-        }),
-      ),
-      new Stage(
-        new PassThroughTransformerSource(),
-        new BasicDeenthropyTransformer(),
-      ),
-    ]);
+  const stream = new $data.stream.csv({
+    source: "${fileName}",
+    delimiter: ",",
+  });
+
+  const tranformator = new BasicDeenthropyTransformer();
+
+  await stream.redirectToBatch(async it => {
+    await dataserver.write(
+      dataset,
+      it
+        .map((it) => stream.arrayToJsonWithKeys(it))
+        .filter((it) => it != null)
+        .map((it) => tranformator.transform(it)),
+    );
+
+    dataserver.optimize(dataset)
+  }, 50_000);
 }
-\`\`\``;
+\`\`\`
+
+Return ONLY the TypeScript code without any explanations or markdown formatting.
+`;
 }
 
 function cleanGeneratedCode(code: string): string {

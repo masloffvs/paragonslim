@@ -3,7 +3,7 @@ import { container } from "tsyringe";
 import { Logger } from "./pino";
 import { Server } from "./server";
 import { Cli } from "./cli";
-import { Ch, type ClickhouseServersConfig, type ICh } from "./ch/init";
+import { Ch, type ICh } from "./ch/init";
 import { Datasets } from "./servers/datasets";
 import { MigrationService } from "./servers/migration";
 
@@ -15,14 +15,14 @@ export function initializeCli() {
   return container.resolve(Cli);
 }
 
-export function initializeDI(serversConfig: Set<ClickhouseServersConfig>) {
+export function initializeDI() {
   container.registerSingleton("Logger", Logger);
   container.registerSingleton("Cli", Cli);
   container.registerSingleton("Server", Server);
   container.registerSingleton(Datasets, Datasets);
   container.registerSingleton(MigrationService, MigrationService);
   
-  const ch = new Ch(container.resolve("Logger"), serversConfig);
+  const ch = new Ch(container.resolve("Logger"));
   container.register<ICh>("Ch", { useValue: ch });
 
   return { container, ch };

@@ -1,27 +1,33 @@
 import { Transformer } from "./transformers/transformer";
 
+type TransformFn = (row: any) => any;
+
+const EMPTY_BODY_REGEX = /^\s*\(\s*\w+\s*\)\s*=>\s*\{\s*\}\s*$/;
+const IDENTITY_ARROW_REGEX = /^\s*\(\s*\w+\s*\)\s*=>\s*\w+\s*$/;
+const IDENTITY_RETURN_REGEX =
+  /^\s*\(\s*\w+\s*\)\s*=>\s*\{\s*return\s+\w+\s*;?\s*\}\s*$/;
+
 export class Transformation extends Transformer {
-  private transformFn: ((row: any) => any) | null = null;
+  private transformFn: TransformFn | null = null;
   private shouldTransform: boolean = false;
 
-  constructor(transformFn?: ((row: any) => any) | null) {
+  constructor(transformFn?: TransformFn | null) {
     super();
 
-    if (transformFn) {
+    if (transformFn && this.isTransformFunctionMeaningful(transformFn)) {
       this.transformFn = transformFn;
-      this.shouldTransform = this.isTransformFunctionMeaningful(transformFn);
+      this.shouldTransform = true;
     }
   }
 
-  private isTransformFunctionMeaningful(fn: (row: any) => any): boolean {
+  private isTransformFunctionMeaningful(fn: TransformFn): boolean {
     const fnString = fn.toString();
 
-    const emptyBody = /^\s*\(\s*\w+\s*\)\s*=>\s*\{\s*\}\s*$/.test(fnString);
-    const identityArrow = /^\s*\(\s*\w+\s*\)\s*=>\s*\w+\s*$/.test(fnString);
-    const identityReturn =
-      /^\s*\(\s*\w+\s*\)\s*=>\s*\{\s*return\s+\w+\s*;?\s*\}\s*$/.test(fnString);
+    const isEmptyBody = EMPTY_BODY_REGEX.test(fnString);
+    const isIdentityArrow = IDENTITY_ARROW_REGEX.test(fnString);
+    const isIdentityReturn = IDENTITY_RETURN_REGEX.test(fnString);
 
-    return !emptyBody && !identityArrow && !identityReturn;
+    return !isEmptyBody && !isIdentityArrow && !isIdentityReturn;
   }
 
   public transform(row: any): any {
@@ -29,7 +35,7 @@ export class Transformation extends Transformer {
       return row;
     }
 
-    const result = this.transformFn!(row);
-    return result === undefined ? row : result;
+    const result = this.transformFn(row);
+    return result ?? row;
   }
 }
