@@ -15,13 +15,28 @@ export interface ICh {
   query(query: string): Promise<Array<{ server: string; result: any }>>;
 }
 
+/**
+ * export CLICKHOUSE_CONNECTION_STRING="http://username:password@host:port"
+ */
+function parseConnectionString(connectionString: string): ClickhouseServersConfig {
+  const url = new URL(connectionString);
+  return {
+    host: url.hostname,
+    port: Number(url.port),
+    username: url.username,
+    password: url.password,
+  };
+}
+
 async function getClickhouseConfig(): Promise<ClickhouseServersConfig> {
   const config = await getClickhouseHostMachineCreds();
+  const parsedEnvConnString = process.env.CLICKHOUSE_CONNECTION_STRING ? parseConnectionString(process.env.CLICKHOUSE_CONNECTION_STRING) : null;
+  
   return {
-    host: String(config.host),
-    port: config.port,
-    username: config.user || "default",
-    password: config.password || "",
+    host: parsedEnvConnString?.host || String(config.host),
+    port: parsedEnvConnString?.port || config.port,
+    username: parsedEnvConnString?.username || config.user || "default",
+    password: parsedEnvConnString?.password || config.password || "",
   };
 }
 
